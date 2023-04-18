@@ -1,5 +1,5 @@
 import './App.css'
-import {useState} from "react";
+import {useState, useEffect} from "react";
 import Form from './Form'
 import axios from "axios";
 
@@ -10,6 +10,22 @@ function App() {
   const [error, setError] = useState(null)
   const [result, setResult] = useState('')
   const [date, setDate] = useState('')
+  const [history, setHistory] = useState(() => {
+    const saved = localStorage.getItem('history')
+    if (saved === null) return []
+
+    return JSON.parse(saved)
+  })
+
+  useEffect(() => {
+    if(!result) return
+    const index = history.findIndex(item => item.amount === amount)
+    if(index !== -1) return
+    const newHistory = [{amount, result, date}, ...history]
+    if(newHistory.length > 5) newHistory.pop()
+    setHistory(newHistory)
+    localStorage.setItem('history', JSON.stringify(newHistory))
+  }, [result]);
 
   const handleAmountChange = async (value) => {
     setLoading(true)
@@ -56,6 +72,18 @@ function App() {
 
       {date && !loading &&
         <p className="text-center text-xs text-gray-600">Date updated: {date}</p>
+      }
+
+      {history.length > 0 &&
+        <div className="mt-7 px-7">
+          <h2 className="text-xl font-bold mb-3">History</h2>
+          {history.map((item, index) => (
+            <div key={index}>
+              <b>{item.amount}</b> USD = <b>{item.result}</b> EUR
+              <span className="text-xs text-gray-600 ml-2">({item.date})</span>
+            </div>
+          ))}
+        </div>
       }
 
     </div>
